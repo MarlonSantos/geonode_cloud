@@ -3,7 +3,7 @@ python-dotenv
 Pillow==11.3.0
 lxml==5.2.1
 psycopg2==2.9.9
-Django==4.2.23
+Django==4.2.27
 
 # Other
 beautifulsoup4==4.12.3
