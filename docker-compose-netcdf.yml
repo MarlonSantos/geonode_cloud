@@ -1,0 +1,97 @@
+# Docker Compose para desenvolvimento com suporte NetCDF
+# Este arquivo estende o docker-compose.yml padrão com configurações específicas para NetCDF
+
+version: '3.8'
+
+services:
+  # Estender o serviço Django com configurações NetCDF
+  django:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      - NETCDF_ENABLED=true
+      - NETCDF_DEBUG=true
+      - GEOSERVER_NETCDF_WORKSPACE=netcdf
+    volumes:
+      - ./geonode_custom/plugins/netcdf_samples:/geoserver_data/data/netcdf_samples:ro
+      - ./test_netcdf_upload.py:/usr/src/geonode/test_netcdf_upload.py:ro
+      - ./setup_netcdf_geoserver.py:/usr/src/geonode/setup_netcdf_geoserver.py:ro
+    command: >
+      sh -c "
+        echo 'Configurando ambiente NetCDF...' &&
+        python setup_netcdf_geoserver.py &&
+        uwsgi --ini /usr/src/geonode/uwsgi.ini
+      "
+
+  # Estender o serviço GeoServer com configurações NetCDF
+  geoserver:
+    build:
+      context: ./geonode_custom/plugins
+      dockerfile: Dockerfile
+    environment:
+      - NETCDF_PLUGINS_ENABLED=true
+      - GEOSERVER_NETCDF_WORKSPACE=netcdf
+      - GEOSERVER_NETCDF_STORE=netcdf_store
+    volumes:
+      - netcdf_data:/geoserver_data/data/netcdf_samples
+      - netcdf_styles:/geoserver_data/data/styles
+    healthcheck:
+      test: "curl -m 10 --fail --silent --write-out 'HTTP CODE : %{http_code}\n' --output /dev/null http://geoserver:8080/geoserver/ows"
+      start_period: 120s
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Serviço Nginx com configurações para uploads grandes
+  nginx:
+    image: geonode/nginx:1.26.3-latest
+    container_name: nginx4${COMPOSE_PROJECT_NAME}
+    environment:
+      - RESOLVER=127.0.0.11
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - nginx-confd:/etc/nginx
+      - nginx-certificates:/geonode-certificates
+      - statics:/mnt/volumes/statics
+      - ./nginx-upload-limit.conf:/etc/nginx/conf.d/upload-limit.conf:ro
+    restart: unless-stopped
+    depends_on:
+      - django
+
+  # Serviço adicional para testes NetCDF
+  netcdf-test:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      - IS_CELERY=False
+      - NETCDF_TEST_MODE=true
+    volumes:
+      - ./test_netcdf_upload.py:/usr/src/geonode/test_netcdf_upload.py:ro
+      - ./geonode_custom/plugins/netcdf_samples:/test_data:ro
+    depends_on:
+      - django
+      - geoserver
+    command: >
+      sh -c "
+        echo 'Aguardando serviços ficarem prontos...' &&
+        sleep 60 &&
+        echo 'Executando testes NetCDF...' &&
+        python test_netcdf_upload.py &&
+        echo 'Testes concluídos!'
+      "
+
+volumes:
+  netcdf_data:
+    driver: local
+  netcdf_styles:
+    driver: local
+  nginx-confd:
+    name: ${COMPOSE_PROJECT_NAME}-nginxconfd
+  nginx-certificates:
+    name: ${COMPOSE_PROJECT_NAME}-nginxcerts
+  statics:
+    name: ${COMPOSE_PROJECT_NAME}-statics

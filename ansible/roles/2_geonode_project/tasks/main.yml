@@ -1,0 +1,58 @@
+---
+- name: Verifica se ambiente virtual existe
+  stat:
+    path: "/home/{{ ansible_user }}/.virtualenvs/{{ geonode_project_name }}"
+  register: venv_exists
+
+- name: Cria ambiente virtual para GeoNode
+  shell: |
+    source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
+    mkvirtualenv --python=/usr/bin/python3.12 {{ geonode_project_name }}
+  args:
+    executable: /bin/bash
+  become_user: "{{ ansible_user }}"
+  when: not venv_exists.stat.exists
+
+- name: Instala Django no ambiente virtual
+  pip:
+    name: Django==3.2.13
+    virtualenv: "/home/{{ ansible_user }}/.virtualenvs/{{ geonode_project_name }}"
+  become_user: "{{ ansible_user }}"
+
+- name: Clona repositório geonode-project
+  git:
+    repo: https://github.com/GeoNode/geonode-project.git
+    dest: "/home/{{ ansible_user }}/geonode-project"
+    version: "{{ geonode_branch }}"
+    force: yes
+  become_user: "{{ ansible_user }}"
+
+- name: Cria projeto GeoNode a partir do template
+  shell: |
+    source /home/{{ ansible_user }}/.virtualenvs/{{ geonode_project_name }}/bin/activate
+    cd /home/{{ ansible_user }}
+    django-admin startproject --template=./geonode-project -e py,sh,md,rst,json,yml,ini,env,sample,properties -n monitoring-cron -n Dockerfile {{ geonode_project_name }}
+  args:
+    executable: /bin/bash
+    creates: "/home/{{ ansible_user }}/{{ geonode_project_name }}"
+  become_user: "{{ ansible_user }}"
+
+- name: Verifica se projeto foi criado
+  stat:
+    path: "/home/{{ ansible_user }}/{{ geonode_project_name }}"
+  register: project_created
+
+- name: Falha se projeto não foi criado
+  fail:
+    msg: "Falha ao criar projeto GeoNode {{ geonode_project_name }}"
+  when: not project_created.stat.exists
+
+- name: Verifica se create-envfile.py existe no projeto
+  stat:
+    path: "/home/{{ ansible_user }}/{{ geonode_project_name }}/create-envfile.py"
+  register: create_envfile_exists
+
+- name: Exibe status do create-envfile.py
+  debug:
+    msg: "create-envfile.py encontrado: {{ create_envfile_exists.stat.exists }}"
+

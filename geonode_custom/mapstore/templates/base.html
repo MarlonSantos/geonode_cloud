@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% load client_version %}
+{% load static %}
+
+{% block html_class %}msgapi{% endblock %}
+
+{% block extra_head %}
+    <link href="/static/fonts/montserrat.css" rel="stylesheet">
+    <link href="{% static 'mapstore/dist/themes/geonode.css' %}?{% client_version %}" rel="stylesheet" />
+    <link href="{% static 'lib/css/bootstrap-select.css' %}?{% client_version %}" rel="stylesheet" />
+    <link href="{% static 'mapstore/dist/themes/geonode_override.css' %}?{% client_version %}" rel="stylesheet" />
+    {% include './geonode-mapstore-client/snippets/custom_theme.html' %}
+    
+{% endblock %}
+
+
+{% block body_extra_class %}gn-legacy gn-theme {% if request.user_agent.is_mobile %}gn-mobile{% else %}gn-desktop{% endif %}{% endblock %}
+
+{% block header %}
+{% include './geonode-mapstore-client/snippets/header.html' %}
+{% block gn_config %}
+    {% include './geonode-mapstore-client/_geonode_config.html' %}
+{% endblock %}
+{% endblock %}
+
+{% block footer %}
+{% include './geonode-mapstore-client/snippets/footer.html' %}
+{% endblock %}
+
+{% block extra_script %}
+    <script type="text/javascript">
+        $('.dropdown-toggle').dropdown();
+    </script>
+           <!-- NetCDF SIMPLE TEST - Teste básico -->
+           <script type="text/javascript">
+               console.log('=== TESTE SIMPLES NetCDF ===');
+               console.log('Script carregado!');
+               
+               // Teste básico
+               setTimeout(function() {
+                   console.log('Teste após 1 segundo - window.gn existe?', typeof window.gn);
+                   if (window.gn) {
+                       console.log('window.gn encontrado!');
+                       window.gn.checkMissingFiles = function() { 
+                           console.log('checkMissingFiles interceptado!');
+                           return []; 
+                       };
+                   } else {
+                       console.log('window.gn NÃO encontrado!');
+                   }
+               }, 1000);
+               
+               // Teste após DOM carregar
+               document.addEventListener('DOMContentLoaded', function() {
+                   console.log('DOM carregado - window.gn existe?', typeof window.gn);
+               });
+           </script>
+{% endblock extra_script %}

@@ -1,0 +1,70 @@
+---
+- name: Instalar GeoNode no Ubuntu 22.04 - Projeto ReNOMO GeoNode
+  hosts: renomo-data1
+  become: yes
+  
+  vars_files:
+    - config.yml
+  
+  vars:
+    geonode_project_name: "{{ project.name }}"
+    env_type: "{{ project.env_type }}"
+    vm_ip: "{{ network.hostname }}"
+    geonode_admin_password: "{{ passwords.geonode_admin }}"
+    geoserver_admin_password: "{{ passwords.geoserver_admin }}"
+    postgres_password: "{{ passwords.postgres }}"
+    db_password: "{{ passwords.geonode_db }}"
+    geodb_password: "{{ passwords.geonode_data_db }}"
+    clientid_password: "{{ passwords.oauth2_client_id }}"
+    clientsecret_password: "{{ passwords.oauth2_client_secret }}"
+    admin_email: "{{ email.admin_email }}"
+    geonode_branch: "{{ project.branch }}"
+    
+    # Novas variáveis do config
+    http_port: "{{ network.http_port }}"
+    https_port: "{{ network.https_port }}"
+    https_enabled: "{{ security.https_enabled }}"
+    letsencrypt_mode: "{{ security.letsencrypt_mode }}"
+    language_code: "{{ language.default }}"
+    languages: "{{ language.available }}"
+    secret_key: "{{ security.secret_key }}"
+    geoserver_memory: "{{ performance.geoserver_memory }}"
+    debug_mode: "{{ monitoring.debug }}"
+
+    database_host: "{{ database.host }}"
+    database_port: "{{ database.port }}"
+    database_max_connections: "{{ database.max_connections }}"
+    docker_api_version: "{{ docker.api_version }}"
+    docker_restart_policy: "{{ docker.restart_policy }}"
+    docker_restart_delay: "{{ docker.restart_delay }}"
+    docker_restart_max_attempts: "{{ docker.restart_max_attempts }}"
+    performance_max_document_size: "{{ performance.max_document_size }}"
+    performance_client_results_limit: "{{ performance.client_results_limit }}"
+    performance_api_limit_per_page: "{{ performance.api_limit_per_page }}"
+    performance_max_parallel_uploads: "{{ performance.max_parallel_uploads }}"
+    monitoring_cache_busting: "{{ monitoring.cache_busting }}"
+    monitoring_memcached_enabled: "{{ monitoring.memcached_enabled }}"
+    siteurl: "{{ 'https' if https_enabled else 'http' }}://{{ vm_ip }}"
+    http_host: "{{ vm_ip if not https_enabled else '' }}"
+    https_host: "{{ vm_ip if https_enabled else '' }}"
+    database_host: "{{ database.host }}"
+    database_port: "{{ database.port }}"
+    debug: "{{ 'True' if debug_mode else 'False' }}"
+
+  roles:
+    - 1_docker_setup
+    - 2_geonode_project
+    - 3_geonode_deploy
+
+  post_tasks:
+    - name: Exibir informações de acesso
+      debug:
+        msg:
+          - "GeoNode ReNOMO instalado com sucesso!"
+          - "Acesse: http://{{ vm_ip }}/"
+          - "GeoServer: http://{{ vm_ip }}/geoserver/"
+          - "Credenciais GeoNode: admin / {{ geonode_admin_password }}"
+          - "Credenciais GeoServer: admin / {{ geoserver_admin_password }}"
+          - "Projeto: {{ geonode_project_name }}"
+          - "Servidor: {{ network.hostname }}"
+

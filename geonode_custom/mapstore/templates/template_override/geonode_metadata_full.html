@@ -1,0 +1,251 @@
+{% load i18n %}
+{% load static %}
+
+<html>
+	<head>
+    <meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ resource.title }}</title>
+    {% block head %}
+	  <link href="{% static "geonode/css/base.css" %}" rel="stylesheet"/>
+	  <link href="{% static "geonode/css/base_override.css" %}" rel="stylesheet"/>
+      <style type="text/css">[ng\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak,.ng-hide:not(.ng-hide-animate){display:none !important;}</style>
+	<style>
+	dl dd{ margin-left:20px; }
+	dl dt {margin-top:10px;}
+	ul.nop {list-style-type: none;}
+	</style>
+
+    {% endblock %}
+	</head>
+	<body style="background-color:white;">
+		{% block body_outer %}
+		  {% block body %}{% endblock body %}
+		  {% block sidebar %}{% endblock sidebar %}
+		{% endblock body_outer %}
+		<div id="wrap">
+			<div class="container">
+				<div class="page-header">
+					<div class="row">
+						<div >
+						  <h4 >{% trans "Resource Metadata" %}</h4>
+						  <h2 class="page-title">{{ resource.title }}</h2>
+						</div>
+					</div>
+				</div>
+
+				<div class="row">
+				  <div class="col-md-8">
+					<dl>
+						<dt>{% trans "Thumbnail" %}</dt>
+							<dd><img class='items-list thumb' style="border: 1px solid #ccc;margin-top:10px;" src='{{resource.thumbnail_url}}' alt="{{ resource.title }}"></dd>
+
+						<dt>{% trans "Resource ID" %}</dt>
+							<dd>{{resource.uuid}}</dd>
+
+						<dt>{% trans "Title" %}</dt>
+							<dd>{{resource.title}}</dd>
+
+						<dt>{% trans "Date" %}</dt>
+							<dd>{{resource.date}}, {% trans resource.date_type|title %} </dd>
+
+						<dt>{% trans "Abstract" %}</dt>
+							<dd>{{resource.raw_abstract}}</dd>
+
+						<dt>{% trans "Edition" %}</dt>
+							{% if resource.edition %}
+							<dd>{{resource.edition}}</dd>
+							{% else %}
+								<dd> -- </dd>
+							{% endif %}
+
+
+						<dt>{% trans "Responsible" %}</dt>
+							<dd>{{resource.owner}}</dd>
+
+						{% for role in extra_res_md.roles %}
+						<dt>{% trans role.label %}</dt>
+
+							{% for user in  role.users %}
+								<dd>{{user.last_name}}</dd>
+								<dd><a href="mailto:{{ user.email}}"><i class="fa fa-envelope"></i>{{ user.email}}</a></dd>
+							{% endfor %}
+						{% endfor %}
+
+						<dt>{% trans "Purpose" %}</dt>
+								{% if resource.purpose %}
+									<dd>{{resource.raw_purpose}}</dd>
+								{% else %}
+									<dd> -- </dd>
+								{% endif %}
+
+
+						<dt>{% trans "Maintenance Frequency" %}</dt>
+							<dd>{{resource.maintenance_frequency}}</dd>
+
+						<dt>{% trans "Type" %} </dt>
+							<dd>{{extra_res_md.sprt_identifier}}</dd>
+
+						<dt>{% trans "Restrictions" %}</dt>
+							<dd>{{resource.restriction_code_type}}</dd>
+							<dd>{{resource.raw_constraints_other}}</dd>
+
+						<dt>{% trans "License" %}</dt>
+							<dd>{{resource.license}}</dd>
+
+						<dt>{% trans "Language" %} </dt>
+							<dd>{{resource.language}}</dd>
+
+						<dt>{% trans "Temporal Extent" %}</dt>
+							<dd>{{resource.temporal_extent_start}} - {{resource.temporal_extent_end}}</dd>
+
+						<dt>{% trans "Keywords" %}</dt>
+							<dd>
+								{% for keyword in resource.keywords.all %}
+									<span class="label label-info">{{keyword.name}}</span>
+								{% endfor %}
+							</dd>
+
+						<dt>{% trans "Category" %}</dt>
+							<dd>{{resource.category}}</dd>
+
+						<dt>{% trans "Regions" %}</dt>
+							<dd>
+								{% for region in resource.regions.all %}
+									<span class="label label-info">{{region.name}}</span>
+								{% endfor %}
+							</dd>
+
+						<dt>{% trans "Supplemental Information" %}</dt>
+							<dd>{{resource.raw_supplemental_information}}</dd>
+
+						<dt>{% trans "Data Quality" %}</dt>
+							<dd>{{resource.raw_data_quality_statement}}</dd>
+
+						<dt>{% trans "Spatial Representation Type" %}</dt>
+							<dd>{{resource.spatial_representation_type}}</dd>
+
+						<dt>{% trans "Distribution" %}</dt>
+							<dd>
+								{% for link in resource.link_set.all %}
+									<div>
+										<a href="{{link.url}}" target="_blank">{{link.name}}</a>
+										{% if link.description %}
+											<br><small>{{link.description}}</small>
+										{% endif %}
+									</div>
+								{% endfor %}
+							</dd>
+
+						<dt>{% trans "Contact" %}</dt>
+							<dd>
+								{% for poc in resource.poc_set.all %}
+									<div>
+										<strong>{{poc.role}}</strong><br>
+										{{poc.name}}<br>
+										{% if poc.organization %}
+											{{poc.organization}}<br>
+										{% endif %}
+										{% if poc.position %}
+											{{poc.position}}<br>
+										{% endif %}
+										{% if poc.email %}
+											<a href="mailto:{{poc.email}}">{{poc.email}}</a><br>
+										{% endif %}
+										{% if poc.voice %}
+											{{poc.voice}}<br>
+										{% endif %}
+										{% if poc.facsimile %}
+											{{poc.facsimile}}<br>
+										{% endif %}
+										{% if poc.delivery_point %}
+											{{poc.delivery_point}}<br>
+										{% endif %}
+										{% if poc.city %}
+											{{poc.city}}<br>
+										{% endif %}
+										{% if poc.administrative_area %}
+											{{poc.administrative_area}}<br>
+										{% endif %}
+										{% if poc.postal_code %}
+											{{poc.postal_code}}<br>
+										{% endif %}
+										{% if poc.country %}
+											{{poc.country}}<br>
+										{% endif %}
+									</div>
+								{% endfor %}
+							</dd>
+
+						<dt>{% trans "Metadata Author" %}</dt>
+							<dd>
+								{% for author in resource.metadata_author_set.all %}
+									<div>
+										<strong>{{author.role}}</strong><br>
+										{{author.name}}<br>
+										{% if author.organization %}
+											{{author.organization}}<br>
+										{% endif %}
+										{% if author.position %}
+											{{author.position}}<br>
+										{% endif %}
+										{% if author.email %}
+											<a href="mailto:{{author.email}}">{{author.email}}</a><br>
+										{% endif %}
+										{% if author.voice %}
+											{{author.voice}}<br>
+										{% endif %}
+										{% if author.facsimile %}
+											{{author.facsimile}}<br>
+										{% endif %}
+										{% if author.delivery_point %}
+											{{author.delivery_point}}<br>
+										{% endif %}
+										{% if author.city %}
+											{{author.city}}<br>
+										{% endif %}
+										{% if author.administrative_area %}
+											{{author.administrative_area}}<br>
+										{% endif %}
+										{% if author.postal_code %}
+											{{author.postal_code}}<br>
+										{% endif %}
+										{% if author.country %}
+											{{author.country}}<br>
+										{% endif %}
+									</div>
+								{% endfor %}
+							</dd>
+
+						<dt>{% trans "Metadata Date" %}</dt>
+							<dd>{{resource.metadata_date}}</dd>
+
+						<dt>{% trans "Metadata Language" %}</dt>
+							<dd>{{resource.metadata_language}}</dd>
+
+						<dt>{% trans "Metadata Character Set" %}</dt>
+							<dd>{{resource.metadata_character_set}}</dd>
+
+						<dt>{% trans "Topic Category" %}</dt>
+							<dd>{{resource.topic_category}}</dd>
+
+						<dt>{% trans "Environment Description" %}</dt>
+							<dd>{{resource.raw_environment_description}}</dd>
+
+						<dt>{% trans "Extent" %}</dt>
+							<dd>
+								<strong>{% trans "BBOX" %}:</strong> {{resource.bbox_x0}}, {{resource.bbox_y0}}, {{resource.bbox_x1}}, {{resource.bbox_y1}}<br>
+								<strong>{% trans "CRS" %}:</strong> {{resource.srid}}
+							</dd>
+
+						<dt>{% trans "Thumbnail" %}</dt>
+							<dd><img class='items-list thumb' style="border: 1px solid #ccc;margin-top:10px;" src='{{resource.thumbnail_url}}' alt="{{ resource.title }}"></dd>
+
+					</dl>
+				  </div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html> 

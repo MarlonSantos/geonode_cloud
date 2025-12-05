@@ -1,0 +1,178 @@
+---
+- name: Verifica se .env.sample existe
+  stat:
+    path: "/home/{{ ansible_user }}/{{ geonode_project_name }}/.env.sample"
+  register: env_sample_check
+
+- name: Falha se .env.sample não existir
+  fail:
+    msg: ".env.sample não encontrado. Execute primeiro a role 2_geonode_project"
+  when: not env_sample_check.stat.exists
+  
+- name: Verifica se create-envfile.py existe
+  stat:
+    path: "/home/{{ ansible_user }}/{{ geonode_project_name }}/create-envfile.py"
+  register: create_envfile_check
+
+- name: Falha se create-envfile.py não existir
+  fail:
+    msg: "create-envfile.py não encontrado no projeto {{ geonode_project_name }}"
+  when: not create_envfile_check.stat.exists
+
+- name: Torna create-envfile.py executável
+  file:
+    path: "/home/{{ ansible_user }}/{{ geonode_project_name }}/create-envfile.py"
+    mode: '0755'
+  become_user: "{{ ansible_user }}"
+
+- name: Remove arquivo .env existente se houver
+  file:
+    path: "/home/{{ ansible_user }}/{{ geonode_project_name }}/.env"
+    state: absent
+  become_user: "{{ ansible_user }}"
+
+- name: Gera arquivo .env usando create-envfile.py (sem prompt)
+  shell: |
+    cd /home/{{ ansible_user }}/{{ geonode_project_name }}
+    echo "y" | python3 create-envfile.py \
+      --env_type={{env_type}}\
+      --hostname={{ vm_ip }} \
+      --email={{ admin_email }} \
+      --geonodepwd={{ geonode_admin_password }} \
+      --geoserverpwd={{ geoserver_admin_password }} \
+      --pgpwd={{ postgres_password }} \
+      --dbpwd={{ db_password }} \
+      --geodbpwd={{ geodb_password }} \
+      --clientid={{clientid_password}} \
+      --clientsecret={{clientsecret_password}}
+  args:
+    executable: /bin/bash
+    creates: "/home/{{ ansible_user }}/{{ geonode_project_name }}/.env"
+  become_user: "{{ ansible_user }}"
+
+- name: Verifica se arquivo .env foi criado
+  stat:
+    path: "/home/{{ ansible_user }}/{{ geonode_project_name }}/.env"
+  register: env_file
+
+- name: Exibe primeiras 20 linhas do .env
+  shell: "head -20 /home/{{ ansible_user }}/{{ geonode_project_name }}/.env"
+  register: env_content
+  become_user: "{{ ansible_user }}"
+  when: env_file.stat.exists
+
+- name: Mostra configurações do .env
+  debug:
+    msg: "{{ env_content.stdout_lines }}"
+  when: env_file.stat.exists
+
+
+- name: Habilita conexões remotas ao PostgreSQL
+  lineinfile:
+  # ATENÇÃO: Verificar se o arquivo docker-compose.yml está no diretório correto	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # path: /home/renomo/rn-geonode/docker-compose.yml
+    path: "/home/{{ ansible_user }}/{{ geonode_project_name }}/docker-compose.yml"
+    regexp: '^(\s*)#\s*ports:'
+    line: '\1ports:'
+    backrefs: yes
+  become_user: "{{ ansible_user }}"
+
+- name: Descomenta mapeamento da porta 5432
+  lineinfile:
+  # ATENÇÃO: Verificar se o arquivo docker-compose.yml está no diretório correto	!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    path: "/home/{{ ansible_user }}/{{ geonode_project_name }}/docker-compose.yml"
+    regexp: '^(\s*)#\s*-\s*"5432:5432"'
+    line: '\1  - "5432:5432"'
+    backrefs: yes
+  become_user: "{{ ansible_user }}"
+
+- name: Build das imagens Docker
+  shell: |
+    cd /home/{{ ansible_user }}/{{ geonode_project_name }}
+    docker-compose build
+  args:
+    executable: /bin/bash
+  become_user: "{{ ansible_user }}"
+  register: docker_build
+  failed_when: docker_build.rc != 0
+  
+
+- name: Inicia containers GeoNode
+  shell: |
+    cd /home/{{ ansible_user }}/{{ geonode_project_name }}
+    docker-compose up -d
+  args:
+    executable: /bin/bash
+  become_user: "{{ ansible_user }}"
+  register: docker_up
+  failed_when: docker_up.rc != 0
+
+- name: Aguarda containers iniciarem
+  pause:
+    seconds: 120
+
+- name: Verifica status dos containers
+  shell: |
+    cd /home/{{ ansible_user }}/{{ geonode_project_name }}
+    docker-compose ps
+  args:
+    executable: /bin/bash
+  become_user: "{{ ansible_user }}"
+  register: containers_status
+
+- name: Exibe status dos containers
+  debug:
+    msg: "{{ containers_status.stdout_lines }}"
+
+- name: Verifica se PostgreSQL está acessível externamente
+  shell: |
+    cd /home/{{ ansible_user }}/{{ geonode_project_name }}
+    docker-compose exec -T db pg_isready -h {{ vm_ip }} -p 5432 -U postgres
+  become_user: "{{ ansible_user }}"
+  register: postgres_external_test
+  ignore_errors: yes
+
+- name: Resultado do teste de conectividade PostgreSQL
+  debug:
+    msg: "PostgreSQL acessível externamente: {{ 'Sim' if postgres_external_test.rc == 0 else 'Não' }}"
+
+- name: Verifica logs do container django
+  shell: |
+    cd /home/{{ ansible_user }}/{{ geonode_project_name }}
+    docker-compose logs --tail=30 django
+  args:
+    executable: /bin/bash
+  become_user: "{{ ansible_user }}"
+  register: django_logs
+  ignore_errors: yes
+
+- name: Exibe logs do Django
+  debug:
+    msg: "{{ django_logs.stdout_lines }}"
+  when: django_logs is defined
+
+- name: Testa conectividade HTTP
+  uri:
+    url: "http://{{ vm_ip }}/"
+    method: GET
+    status_code: [200, 302]
+  register: http_test
+  retries: 10
+  delay: 30
+  ignore_errors: yes
+
+- name: Resultado do teste HTTP
+  debug:
+    msg: 
+      - "Status HTTP: {{ http_test.status | default('Falha na conexão') }}"
+      - "GeoNode acessível: {{ 'Sim' if http_test.status in [200, 302] else 'Não' }}"
+      - "URL: http://{{ vm_ip }}/"
+
+- name: Exibir comandos úteis
+  debug:
+    msg:
+      - "Para monitorar logs: cd /home/{{ ansible_user }}/{{ geonode_project_name }} && docker-compose logs -f"
+      - "Para parar containers: cd /home/{{ ansible_user }}/{{ geonode_project_name }} && docker-compose down"
+      - "Para reiniciar: cd /home/{{ ansible_user }}/{{ geonode_project_name }} && docker-compose restart"
+      - "PostgreSQL externo: psql -h {{ vm_ip }} -p 5432 -U postgres"
+

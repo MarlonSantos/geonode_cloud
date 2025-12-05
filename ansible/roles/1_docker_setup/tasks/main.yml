@@ -1,0 +1,154 @@
+---
+- name: Atualiza cache do APT
+  become: true
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Executa upgrade completo do sistema
+  become: true
+  apt:
+    upgrade: dist
+    autoremove: yes
+    autoclean: yes
+
+- name: Adiciona repositório universe
+  apt_repository:
+    repo: "deb http://archive.ubuntu.com/ubuntu {{ ansible_distribution_release }} universe"
+    state: present
+
+- name: Instala dependências básicas para GeoNode
+  apt:
+    name:
+      - build-essential
+      - python3-all-dev
+      - virtualenvwrapper
+      - libxml2
+      - libxml2-dev
+      - gettext
+      - libmemcached-dev
+      - zlib1g-dev
+      - libxslt1-dev
+      - libjpeg-dev
+      - libpng-dev
+      - libpq-dev
+      - software-properties-common
+      - git
+      - curl
+      - snapd
+      - unzip
+      - gcc
+      - openssh-server
+      - libgeos-dev
+      - libproj-dev
+      - sqlite3
+      - spatialite-bin
+      - libsqlite3-mod-spatialite
+      - libsqlite3-dev
+      - apt-transport-https
+      - ca-certificates
+      - lsb-release
+      - gnupg
+    state: present
+    update_cache: yes
+
+- name: Instala Docker usando script oficial (método mais confiável)
+  shell: |
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sudo sh get-docker.sh
+    rm -f get-docker.sh
+  args:
+    creates: /usr/bin/docker
+
+- name: Verifica se Docker foi instalado
+  command: docker --version
+  register: docker_installed
+  failed_when: false
+  changed_when: false
+
+- name: Verifica se grupo docker existe
+  getent:
+    database: group
+    key: docker
+  register: docker_group_check
+  failed_when: false
+
+- name: Cria grupo docker se não existir
+  group:
+    name: docker
+    state: present
+  when: docker_group_check.failed
+
+- name: Instala Docker Compose (método direto)
+  shell: |
+    DOCKER_COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep 'tag_name' | cut -d\" -f4)
+    sudo curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+  args:
+    creates: /usr/local/bin/docker-compose
+
+- name: Adiciona usuário ao grupo docker
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
+
+- name: Inicia e habilitar serviço Docker
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Aguarda Docker inicializar
+  pause:
+    seconds: 10
+
+- name: Verifica instalação do Docker
+  command: docker --version
+  register: docker_version
+  changed_when: false
+
+- name: Verifica instalação do Docker Compose
+  shell: docker-compose --version || docker compose version
+  register: docker_compose_version
+  changed_when: false
+  failed_when: false
+
+- name: Exibe versões instaladas
+  debug:
+    msg:
+      - "Docker: {{ docker_version.stdout }}"
+      - "Docker Compose: {{ docker_compose_version.stdout if docker_compose_version.rc == 0 else 'Instalado via script' }}"
+
+- name: Configura virtualenvwrapper para GeoNode
+  lineinfile:
+    path: "/home/{{ ansible_user }}/.bashrc"
+    line: "{{ item }}"
+    state: present
+  loop:
+    - "export WORKON_HOME=$HOME/.virtualenvs"
+    - "export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3.12"
+    - "source /usr/share/virtualenvwrapper/virtualenvwrapper.sh"
+
+- name: Cria diretório .virtualenvs
+  file:
+    path: "/home/{{ ansible_user }}/.virtualenvs"
+    state: directory
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0755'
+
+- name: Testa Docker com hello-world
+  shell: docker run --rm hello-world
+  register: docker_test
+  become_user: "{{ ansible_user }}"
+  changed_when: false
+  failed_when: false
+
+- name: Exibe resultado do teste Docker
+  debug:
+    msg: "{{ docker_test.stdout_lines if docker_test.rc == 0 else 'Teste do Docker falhou ou foi pulado' }}"
+
+- name: Reinicia sessão para aplicar grupo docker
+  meta: reset_connection
+

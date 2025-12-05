@@ -1,0 +1,7 @@
+<dl>
+{% for name, property in metadata.items %}
+    {% block property %}
+        {% include 'geonode-mapstore-client/snippets/metadata_field.html' with prefix=prefix name=name property=property %}
+    {% endblock property %}
+{% endfor %}
+</dl>

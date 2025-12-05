@@ -1,0 +1,34 @@
+---
+- name: Instalar GeoNode no Ubuntu 24.04 - Projeto ram_br_geonode
+  hosts: ram-br
+  become: yes
+  vars:
+    geonode_project_name: "ram_br_geonode"
+    env_type: "prod"
+    vm_ip: "{{ ansible_default_ipv4.address }}"
+    geonode_admin_password: "geonode123"
+    geoserver_admin_password: "geoserver123"
+    postgres_password: "postgres123"
+    db_password: "geonode123"
+    geodb_password: "geonode_data123"
+    clientid_password: "clientid123"
+    clientsecret_password: "clientsecret123"
+    admin_email: "admin@ram-br.local"
+    geonode_branch: "4.2.2"
+
+  roles:
+    - 1_docker_setup
+    - 2_geonode_project
+    - 3_geonode_deploy
+
+  post_tasks:
+    - name: Exibir informações de acesso
+      debug:
+        msg:
+          - "GeoNode RAM-BR instalado com sucesso!"
+          - "Acesse: http://{{ vm_ip }}/"
+          - "GeoServer: http://{{ vm_ip }}/geoserver/"
+          - "Credenciais GeoNode: admin / {{ geonode_admin_password }}"
+          - "Credenciais GeoServer: admin / {{ geoserver_admin_password }}"
+          - "Projeto: {{ geonode_project_name }}"
+

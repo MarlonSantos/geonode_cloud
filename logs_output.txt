@@ -1,0 +1,36 @@
+=== INVESTIGANDO LOGS DO GEONODE ===
+
+=== DJANGO LOGS (últimas 50 linhas com erros) ===
+  Applying auth.0007_alter_validators_add_error_messages...[32;1m OK[0m
+  Applying auth.0007_alter_validators_add_error_messages...[32;1m OK[0m
+
+=== CELERY LOGS (últimas 30 linhas com erros) ===
+  . dynamic_model_error_callback
+  . geonode.harvesting.tasks._handle_harvestable_resources_update_error
+  . geonode.harvesting.tasks._handle_harvesting_error
+
+=== GEOSERVER LOGS (últimas 20 linhas com erros) ===
+=== Copiando arquivos NetCDF para o volume ===
+=== Arquivos NetCDF copiados para /geoserver_data/data/netcdf_samples/ ===
+Native library load failed.
+java.lang.UnsatisfiedLinkError: no gdalalljni in java.library.path: [/usr/local/tomcat/native-jni-lib, /usr/java/packages/lib, /usr/lib64, /lib64, /lib, /usr/lib]
+15-Sep-2025 18:19:42.775 WARNING [main] it.geosolutions.imageio.gdalframework.GDALUtilities.loadGDAL Failed to load the GDAL native libs. This is not a problem unless you need to use the GDAL plugins: they won't be enabled.
+java.lang.UnsatisfiedLinkError: 'void org.gdal.gdal.gdalJNI.AllRegister()'
+15-Sep-2025 18:19:43.054 INFO [main] org.geotools.imageio.netcdf.utilities.NetCDFUtilities.<clinit> Value of Check Coordinate Plugins:null
+15-Sep-2025 18:19:43.054 INFO [main] org.geotools.imageio.netcdf.utilities.NetCDFUtilities.<clinit> Should check for coordinate handler plugins:false
+
+=== NGINX LOGS (últimas 10 linhas) ===
+172.18.0.1 - - [15/Sep/2025:18:47:27 +0000] "GET /api/v2/executionrequest?page_size=9999&filter%7Baction%7D=upload&sort[]=-created HTTP/1.1" 200 634 "http://localhost/catalogue/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+172.18.0.1 - - [15/Sep/2025:18:47:30 +0000] "GET /api/v2/executionrequest?page_size=9999&filter%7Baction%7D=upload&sort[]=-created HTTP/1.1" 200 634 "http://localhost/catalogue/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+172.18.0.1 - - [15/Sep/2025:18:47:33 +0000] "GET /api/v2/executionrequest?page_size=9999&filter%7Baction%7D=upload&sort[]=-created HTTP/1.1" 200 634 "http://localhost/catalogue/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+172.18.0.1 - - [15/Sep/2025:18:47:36 +0000] "GET /api/v2/executionrequest?page_size=9999&filter%7Baction%7D=upload&sort[]=-created HTTP/1.1" 200 634 "http://localhost/catalogue/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+172.18.0.1 - - [15/Sep/2025:18:47:39 +0000] "GET /api/v2/executionrequest?page_size=9999&filter%7Baction%7D=upload&sort[]=-created HTTP/1.1" 200 634 "http://localhost/catalogue/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+172.18.0.1 - - [15/Sep/2025:18:47:42 +0000] "GET /api/v2/executionrequest?page_size=9999&filter%7Baction%7D=upload&sort[]=-created HTTP/1.1" 200 634 "http://localhost/catalogue/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+172.18.0.1 - - [15/Sep/2025:18:47:45 +0000] "GET /api/v2/executionrequest?page_size=9999&filter%7Baction%7D=upload&sort[]=-created HTTP/1.1" 200 634 "http://localhost/catalogue/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+172.18.0.1 - - [15/Sep/2025:18:47:48 +0000] "GET /api/v2/executionrequest?page_size=9999&filter%7Baction%7D=upload&sort[]=-created HTTP/1.1" 200 634 "http://localhost/catalogue/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+172.18.0.1 - - [15/Sep/2025:18:47:51 +0000] "GET /api/v2/executionrequest?page_size=9999&filter%7Baction%7D=upload&sort[]=-created HTTP/1.1" 200 634 "http://localhost/catalogue/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+172.18.0.1 - - [15/Sep/2025:18:47:54 +0000] "GET /api/v2/executionrequest?page_size=9999&filter%7Baction%7D=upload&sort[]=-created HTTP/1.1" 200 634 "http://localhost/catalogue/" "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+
+=== EXECUTION REQUESTS NO BANCO ===
+
+=== FIM DA INVESTIGAÇÃO ===

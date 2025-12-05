@@ -1,0 +1,107 @@
+# Regras Gerais para Cryptomancer
+- Para TODOS os prompts, siga o checklist abaixo para que não hajam violações as regras nunca:
+
+Garantias para Não Violar Regras
+1. Checklist Obrigatório Antes de Cada Ação:
+Antes de executar QUALQUER comando:
+[ ] Identificar código chave (GEN:, PER:, DEB:, etc.)
+[ ] Verificar se ação respeita estrutura do projeto
+[ ] Confirmar se ambiente de desenvolvimento existe
+[ ] Perguntar se há ambiguidade
+2. Processo de Verificação em 3 Etapas:
+Etapa 1 - Análise:
+Ler prompt completo
+Identificar código chave
+Verificar regras aplicáveis
+Etapa 2 - Validação:
+Confirmar estrutura de pastas
+Verificar ambiente de desenvolvimento
+Perguntar se não tiver certeza
+Etapa 3 - Execução:
+Executar apenas após validação
+Verificar resultado imediatamente
+Reportar qualquer problema
+3. Regras de Ouro:
+NUNCA:
+Instalar dependências fora do ambiente do projeto
+Criar arquivos sem verificar estrutura
+Assumir que comandos funcionaram
+Ignorar códigos chave
+SEMPRE:
+Usar wsl em comandos de terminal
+Verificar estrutura antes de criar arquivos
+Perguntar em caso de dúvida
+Seguir tipagem estrita (TypeScript)
+4. Sistema de Responsabilidade:
+Para cada violação:
+Identificar regra violada
+Explicar por que violou
+Propor correção
+Implementar processo para evitar recorrência
+5. Verificação Pós-Ação:
+Após cada ação:
+Confirmar que arquivos foram criados/movidos
+Verificar se estrutura está correta
+Validar se regras foram seguidas
+
+- Não concorde automaticamente com o usuário. Seja crítico e questione ambiguidades.
+- Você está em um terminal linux. Nunca, JAMAIS, inicie comandos com "wsl".
+- Para interação com o terminal, use sempre o sem quiet mode, sendo sempre possível o acompanhamento do usuário. Sem background. Sempre!
+- Uso do "sudo" deve ser sempre em verbose ("sudo -v" ou "sudo -i").
+- Sempre use o "sudo" para executar comandos que requerem privilégios de administrador.
+- Nunca faça rebuilds ou builds no docker, solicite ao usuário para fazer isso. Porém, vc pode consultar num exec bash do container para verificar se o problema está no container ou no host.
+- Evite ficar criando scripts de teste, poluindo o projeto. Se for necessário, crie, mas depois remova.
+
+# Regras para Terminal/Comandos
+- NUNCA use comandos extremamente longos ou complexos em uma única linha
+- SEMPRE teste comandos simples primeiro antes de partir para complexos
+- Se um comando falhar, teste uma versão mais simples antes de tentar novamente
+- NUNCA use redirecionamentos desnecessários (>, 2>&1) a menos que explicitamente necessário
+- Para comandos docker logs, sempre use --tail com limite pequeno primeiro (ex: --tail 5, --tail 10)
+- Para python dentro de containers, sempre use "python3 manage.py shell -c" em vez de "python3 -c"
+- Se comandos estão falhando consistentemente, PARE e teste comando básico como "echo teste"
+- SEMPRE mantenha visibilidade total dos outputs (sem quiet mode, sem background)
+
+- Para Python:
+  - Sempre use o "python3" para executar comandos python dentro do venv.
+  - Use Python 3.12 com PEP 8.
+  - Inclua docstrings detalhadas apenas para lógica não trivial (ex.: funções com mais de 10 linhas, cálculos de trading como RSI/MACD, integração complexa com APIs/WebSockets).
+  - Use pandas e numpy para análise de dados.
+  - Inclua tratamento de erros robusto para falhas de API (ex.: rate limits, desconexões).
+  - Inclua tratamento de erros robusto para falhas de WebSockets (ex.: rate limits, desconexões).
+- Para Github
+  - Quando for solicitada a atualização do git, usar o "git add .", depois "git commit -m " com a descrição escolhida pelo usuário, depois "git push".
+  - Sempre antes de um "git add .", avsculhe por pastas e arquivos que podem ser adicionados ao gitignore, comunique e peça autoriazão para incluí-los antes de   fazer qualquer coisa.
+  - Você pode sugerir a descrição do commit, porém toda e qualquer descrição que não for criada pelo prompt deve ser aprovada pelo usuário. SEMPRE.
+
+- Geral:
+  - Priorize performance e segurança (ex.: validação de inputs, tratamento de erros).
+  - Evite dependências desnecessárias.
+  - Comente apenas lógica não trivial (ex.: cálculos de trading, integração com APIs/WebSockets).
+  - Faça estritamente o que for solicitado no prompt. Em caso de dúvida ou ambiguidade, pergunte: "Você quis dizer [interpretação]? Confirme o código chave (ex.: GEN:, DEB:) ou forneça mais detalhes." Após atender, sugira apenas modificações relevantes e pergunte se deseja aplicá-las.
+  - Ao criar arquivos ou pastas, respeite estritamente a estrutura do projeto (ex.: src/, tests/). Em caso de dúvida, pergunte antes de criar.
+  - Não modifique nomes definidos anteriormente, salvo quando solicitado explicitamente.
+  - Sempre respeite a arquitetura de pastas, subpastas e arquivos do projeto. 
+  - Sempre siga os padrões do projeto de nomenclatura de pastas e arquivos e de organização.
+  - Toda e qualquer instalação deve ser feita somente no ambiente de desenvolvimento do projeto. Case não exista, comunique para que seja feito oprompt para criá-lo.
+  
+# Regras de Classificação com Códigos Chave (Agente Inteligente)
+- Sempre analise o prompt do usuário para identificar o tipo de tarefa baseado em códigos chave (prefixos maiúsculos seguidos de dois pontos).
+- Se começar com "GEN:" ou "PROMPT:", gere código novo do zero, sem reusar código existente, seguindo as regras gerais. Forneça explicações passo a passo e exemplos de uso. Inclua testes unitários com pytest (Python) ou Jest (TypeScript). Prefira GPT-4o.
+- Se começar com "REF:" ou "MELHORAR:", refine o código existente (use contexto do arquivo ou prompt anterior). Sugira otimizações ou features, explicando diferenças entre original e novo. Prefira GPT-4o.
+- Se começar com "DEB:" ou "DEBUGAR:", identifique erros, explique pelo menos duas hipóteses para as causas, teste hipóteses, e proponha correções com logging descritivo e testes unitários. Use DeepSearch (se Grok 3 Mini) para buscar soluções no X. Prefira o1.
+- Se começar com "PER:" ou "PERGUNTA:", responda com informações rápidas, buscas em documentação ou exemplos mínimos funcionais, sempre com referência (ex.: link ou trecho de doc). Use DeepSearch (se Grok 3 Mini). Prefira Grok 3 Mini.
+- Se começar com "BAC:" ou "BACKTEST:", gere código de backtesting em Python com APIs nativas/pandas, incluindo logs, tratamento de erros e testes unitários com pytest. Use DeepSearch (se Grok 3 Mini) para exemplos de estratégias. Prefira GPT-4o.
+- Se começar com "OTI:" ou "OTIMIZE:", otimize algoritmos ou performance, explicando trade-offs entre performance e legibilidade. Mantenha o código compreensível para manutenção. Prefira o1.
+- Se começar com "OU:" ou "OUTROS:", Execute estritamente o que for pedido, sempre obedecendo esse ruleset. Prefira Grok 3 Mini.
+- Se nenhum código chave for detectado, assuma "DEB:" e pergunte: "Você quis debugar? Confirme com "DEB" ou especifique outro código chave."
+- Se o limite de queries de GPT-4o/o1 for atingido, use Grok 3 Mini como backup.
+- Sempre avise quando estiver próximo ao limite final de utilização de qualquer modelo, avisando também qual é o tempo necessário para o respawn do limite.  
+
+- Nas respostas colocar "[Geração de Código]" no início da resposta de um DEB.
+- Nas respostas colocar "[Refinamento]" no início da resposta de um REF.
+- Nas respostas colocar "[Backtesting]" no início da resposta de um BAC.
+- Nas respostas colocar "[Debug]" no início da resposta de um DEB.
+- Nas respostas colocar "[Pergunta]" no início da resposta de um PER.
+- Nas respostas colocar "[Otimização]" no início da resposta de um OTI.
+- Nas respostas colocar "[Outros]" no início da resposta de um OU.
